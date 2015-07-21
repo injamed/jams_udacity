@@ -186,6 +186,16 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>NOTE: EVERYTHING WAS RECALCULATED USING IMPROVED DATASET (turnstile_weather_v2.csv).</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <hr>
 
 </div>
@@ -216,7 +226,6 @@ div#notebook {
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Problems with understanding and interpretation of the Mann-Whitney U-test:</p>
-<p><a href="http://stats.stackexchange.com/questions/124995/how-do-i-interpret-the-p-value-returned-in-scipys-mann-whitney-u-test">http://stats.stackexchange.com/questions/124995/how-do-i-interpret-the-p-value-returned-in-scipys-mann-whitney-u-test</a></p>
 <p><a href="https://discussions.udacity.com/t/problem-set-3-3-interpreting-mann-whitney-u-test-repost/25403/2">https://discussions.udacity.com/t/problem-set-3-3-interpreting-mann-whitney-u-test-repost/25403/2</a></p>
 <p><a href="https://discussions.udacity.com/t/welchs-ttest-use-it-if-distribution-not-normal/21193">https://discussions.udacity.com/t/welchs-ttest-use-it-if-distribution-not-normal/21193</a></p>
 <p>Linear regression with Python:</p>
@@ -225,6 +234,9 @@ div#notebook {
 <p><a href="https://en.wikipedia.org/wiki/Coefficient_of_determination#Interpretation">https://en.wikipedia.org/wiki/Coefficient_of_determination#Interpretation</a></p>
 <p>Matplotlib: equal width of the bins in histogram (looks familiar):</p>
 <p><a href="http://stackoverflow.com/questions/28101623/python-pyplot-histogram-adjusting-bin-width-not-number-of-bins">http://stackoverflow.com/questions/28101623/python-pyplot-histogram-adjusting-bin-width-not-number-of-bins</a></p>
+<p>QQ-plots:</p>
+<p><a href="https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot">https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot</a></p>
+<p><a href="http://stats.stackexchange.com/questions/101274/how-to-interpret-a-qq-plot">http://stats.stackexchange.com/questions/101274/how-to-interpret-a-qq-plot</a></p>
 
 </div>
 </div>
@@ -273,7 +285,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>I used <strong>two-sided Mann-Whitney U-test</strong> (two-tailed p-value: 0.04999983)</p>
+<p>I used <strong>two-sided Mann-Whitney U-test</strong> (two-tailed p-value: 5.482139e-06)</p>
 <p>null hypothesis $H_0$: distribution of the number of entries equal for rainy and non rainy days</p>
 <p>alternative hypothesis $H_1$: distribution of the number of entries different for rainy and non rainy days</p>
 
@@ -305,7 +317,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We don't care about any properties of the samples to be tested with the Mann-Whitney U-test. In our case both distributions are right-skewed.</p>
+<p>In this case we need to check, if values from one sample is greater, than in the other, but we can't use parametric test (t-test), because both sample's distributions are right-skewed (for the t-test we need a normal distribution). Values in both samples represents number of the passengers, so can be compared with the relation "&lt;" or "&gt;" (<a href="http://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.stats.mannwhitneyu.html">continuity correction</a> for equal values applies by default in scipy's implementation).</p>
 
 </div>
 </div>
@@ -335,9 +347,9 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>mean for the rainy days sample: $\mu_r = 1105.446$</p>
-<p>mean for the non rainy days sample: $\mu_r = 1090.279$</p>
-<p>p-value: p = 0.04999983</p>
+<p>mean for the rainy days sample: $\mu_r = 2028.196$</p>
+<p>mean for the non rainy days sample: $\mu_r = 1845.5394$</p>
+<p>p-value: p = 5.482139e-06</p>
 
 </div>
 </div>
@@ -367,8 +379,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>With the significance level α=0.05 null-hypothesis is rejected in favour of the alternative. But it has to be noted, that resulted p-value almost equal to critical value.
-Distribution of the number of entrances statistically different between rainy and non rainy days. Comparisons of means suppose, that we have slightly higher number of entrances in rainy days.</p>
+<p>With the significance level α=0.05 null-hypothesis is rejected in favour of the alternative. 
+Distribution of the number of entrances statistically different between rainy and non rainy days. Comparisons of means suppose, that we have higher number of entrances in rainy days.</p>
 
 </div>
 </div>
@@ -450,7 +462,7 @@ Distribution of the number of entrances statistically different between rainy an
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>I used: 'Hour', 'maxpressurei', 'maxdewpti','minpressurei', 'meanpressurei', 'rain', 'meanwindspdi', 'mintempi' and dummy variable prodused from 'UNIT' variable.</p>
+<p>I used: 'rain' 'weekday' and 'hour', 'UNIT' as a dummy variables,</p>
 
 </div>
 </div>
@@ -483,38 +495,7 @@ Your reasons might also be based on data exploration and experimentation, for ex
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First I've tried several combinations using an intuition, then I've printed out summary of fitting the linear regression and chose coefficients, that significantly different from 0. Code and summary below:</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span class="k">def</span> <span class="nf">linear_regression</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-    
-    <span class="n">features</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">prepend</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-    <span class="n">intercept</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">params</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-    <span class="k">print</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
-<span class="c">#print linear_regression(dataframe[nmes_clear], dataframe[&#39;ENTRIESn_hourly&#39;])</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Note: I had to got rid of "thunder" variable, because there was a problem adding the constant (intercept) when one constant already exists in data set. I can't find a link right now, but it is known problem.</p>
+<p>After an observation, that a large number of the potential features are weather conditions (so related to each other and this can cause multicollinearity), I decided to use only one of the weather variables - 'rain'. Then it was an observations from the histograms of the next section - number of passengers definitely varies depending on day of week and time of day.</p>
 
 </div>
 </div>
@@ -544,7 +525,27 @@ Your reasons might also be based on data exploration and experimentation, for ex
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><img src="lr_summary.png"></p>
+<table>
+<thead><tr>
+<th>feature</th>
+<th>weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>const</td>
+<td>-1022.636</td>
+</tr>
+<tr>
+<td>rain</td>
+<td>40.617</td>
+</tr>
+<tr>
+<td>weekday</td>
+<td>1003.760</td>
+</tr>
+</tbody>
+</table>
 
 </div>
 </div>
@@ -574,7 +575,7 @@ Your reasons might also be based on data exploration and experimentation, for ex
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>$R^2 = 0.481891290522$</p>
+<p>$R^2 = 0.541$</p>
 
 </div>
 </div>
@@ -604,7 +605,17 @@ Your reasons might also be based on data exploration and experimentation, for ex
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Around 48% of the variance in the response variable (number of entrances per hour) can be explained by the explanatory variables. As it is a real-world data-set this value is fair enough, I reckon this model is fit reasonably well.</p>
+<p>Around 54% of the variance in the response variable (number of entrances per hour) can be explained by the explanatory variables. Though this value is reasonably high, histogram of the residuals shows, that heavy tails are present. So fit of the model is not perfect, still I don't know, if it could be better with the linear model.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="residuals_hist_cl.png"></p>
 
 </div>
 </div>
@@ -664,27 +675,6 @@ Your reasons might also be based on data exploration and experimentation, for ex
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><em>This histogram shows us a skewness of data (expected), but as it is not normalized by number of rainy and not rainy days we can't apply it for any further conclusions</em>.</p>
-<p><em>Normalized version below:</em></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><img src="Rain_no_rain_norm.png"></p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><em>Here we can see only slight difference, as expected from result of statistical test.</em></p>
 
 </div>
 </div>
@@ -805,7 +795,7 @@ Ridership by day-of-week</strong></p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><em>To analyze NY Subway dataset Mann-Whitney statistical test was applied and obtained results revealed that there is a slight difference between ridership in rainy and non rainy days - in rainy days slightly more people enters the NY subway stations. Average number of entrances in rainy days is approximately 1105, in non rainy days - 1090.</em></p>
+<p><em>To analyze NY Subway dataset Mann-Whitney statistical test was applied and obtained results revealed that there is a slight difference between ridership in rainy and non rainy days - in rainy days slightly more people enters the NY subway stations. Average number of entrances in rainy days is approximately 2028, in non rainy days - 1846.</em></p>
 
 </div>
 </div>
@@ -836,7 +826,7 @@ tests and your linear regression to support your analysis.</strong></p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Result of Mann-Whitney test, namely, probability of obtain the different value of number of people choosing randomly from subset of rainy days vs choosing from non rainy days, showed, that there is a statistically significant difference; comparing summary statistics - such as means and medians - revealed, that higher ridership characterized rainy days. Also, in regression model raininess is a significant predictor, that means that this factor contributes to the prediction of number of passengers.</p>
+<p>Result of Mann-Whitney test, namely, probability of obtain the different value of number of people choosing randomly from subset of rainy days vs choosing from non rainy days, showed, that there is a statistically significant difference; comparing summary statistics - such as means and medians - revealed, that higher ridership characterized rainy days. Also, in regression model raininess is a significant predictor with the positive weight, that means that this factor contributes to the prediction  of number of passengers.</p>
 
 </div>
 </div>
@@ -887,25 +877,13 @@ tests and your linear regression to support your analysis.</strong></p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>I noticed, that for a different UNITs time of registration of number of entrances can be shifted for one hour or missing (e.g. R001 - (Hours) 1, 5, 9, 13, 17, 21, R003 - 0, 4, 12, 16, 20), this can cause some issues. 
-Second not very great thing is that raininess usually not a day-long characteristics, for example, days, when it was raining between 03 and 07 am can be marked as rainy, but in fact this rain didn't cause changes in ridership.
-Most of the predictors are weather conditions, so correlated to each other (rain and preassure for example), so using all of them in the regression model can cause multicollinearity problems. Also, output of the scipy's mannwhitneyu is <a href="http://stats.stackexchange.com/questions/124995/how-do-i-interpret-the-p-value-returned-in-scipys-mann-whitney-u-test">quastionable</a>.</p>
+<p>Raininess usually not a day-long characteristics, for example, days, when it was raining between 03 and 07 am can be marked as rainy, but in fact this rain didn't cause changes in ridership.
+Most of the predictors are weather conditions, so correlated to each other (rain and preassure for example), so using some of them tougether in the regression model can cause multicollinearity problems.
+In raw dataset it is also some inconsistencies in times of registration on number of entries in different units (stations).</p>
+<p>After performing a model, histogram of the residuals shows heavy tales, this meant that model fit is questionable. Though I've deleted one variable of each dummy sets and tested different sets of features, residuals distribution indicates that there is a problem.</p>
 
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre> 
-</pre></div>
-
-</div>
-</div>
-</div>
-
 </div>
     </div>
   </div>
