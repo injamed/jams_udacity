@@ -1,0 +1,918 @@
+Reading devices and habits by Antonina Nesterenko
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+```
+
+```{r echo=FALSE, Load_the_Data}
+
+reader_s <- read.csv("January_2014_Ereading_Gadgets_CSV.csv")
+
+names(reader_s) <- c("id", "sample", "lang", "fips", "state", "cregion", "usr", "has_cellph", "has_comp", "has_ereader", "has_tablet", "is_smart", "n_readed", "r_printedb", "r_audiob", "r_ebook", "r_eb_tablet", "r_eb_ereader", "r_eb_comp", "r_eb_cellph", "r_yesterday", "pial6m1", "pial6m2", "pial6m3", "pial6m4", "SmartPhone", "ql1", "ql1a", "qc1", "hh1", "employ", "parent", "gender", "age", "educ", "is_hisp", "race", "income", "income2", "reg", "party", "party_ln", "raceos", "weight", "standwt")
+
+reader_s.ed <- reader_s[, c("id", "sample", "has_cellph", "has_comp", "has_ereader", "has_tablet", "is_smart", "n_readed", "r_printedb", "r_audiob", "r_ebook", "r_eb_tablet", "r_eb_ereader", "r_eb_comp", "r_eb_cellph", "r_yesterday", "employ", "parent", "gender", "age", "educ", "race", "income")]
+
+reader_s.ed$id <- factor(reader_s.ed$id)
+
+reader_s.ed$sample <- factor(reader_s.ed$sample, labels = c("1", "2"))
+
+reader_s.ed$has_cellph <- factor(reader_s.ed$has_cellph, labels = c("yes", "no", "d_no", "refused"))
+reader_s.ed$has_cellph[which(reader_s.ed$sample == 2)] <- "yes"
+
+reader_s.ed$has_comp <- factor(reader_s.ed$has_comp, labels = c("yes", "no", "refused"))
+
+reader_s.ed$has_ereader <- factor(reader_s.ed$has_ereader, labels = c("yes", "no", "d_no", "refused"))
+
+reader_s.ed$has_tablet <- factor(reader_s.ed$has_tablet, labels = c("yes", "no", "d_no", "refused"))
+
+reader_s.ed$n_readed <- replace(reader_s.ed$n_readed, reader_s.ed$n_readed == 98 | reader_s.ed$n_readed == 99, NA)
+
+reader_s.ed$is_smart <- factor(reader_s.ed$is_smart, labels = c("smart", "not smart", "d_no", "refused"))
+
+reader_s.ed$r_printedb <- factor(reader_s.ed$r_printedb, labels = c("yes", "no", "d_no", "refused"))
+
+reader_s.ed$r_audiob <- factor(reader_s.ed$r_audiob, labels = c("yes", "no", "d_no"))
+
+reader_s.ed$r_ebook <- factor(reader_s.ed$r_ebook, labels = c("yes", "no", "d_no"))
+
+reader_s.ed$r_eb_tablet <- factor(reader_s.ed$r_eb_tablet, labels = c("e_day", "ft_we", "ft_mo", "less", "not_dev"))
+
+reader_s.ed$r_eb_ereader <- factor(reader_s.ed$r_eb_ereader, labels = c("e_day", "ft_we", "ft_mo", "less", 
+                                                                   "not_dev", "cant_dev", "d_no", "refused"))
+
+reader_s.ed$r_eb_comp <- factor(reader_s.ed$r_eb_comp, labels = c("e_day", "ft_we", "ft_mo", "less", "not_dev"))
+
+reader_s.ed$r_eb_cellph <- factor(reader_s.ed$r_eb_cellph, labels = c("e_day", "ft_we", "ft_mo", "less", "not_dev"))
+
+reader_s.ed$r_yesterday <- factor(reader_s.ed$r_yesterday, labels = c("yes", "no"))
+
+reader_s.ed$employ <- factor(reader_s.ed$employ, labels = c("f_time", "p_time", "not", "refused"))
+
+reader_s.ed$parent <- factor(reader_s.ed$parent, labels = c("yes", "no", "refused"))
+
+reader_s.ed$gender <- factor(reader_s.ed$gender, labels = c("male", "female"))
+
+reader_s.ed$age <- replace(reader_s.ed$age, reader_s.ed$age == 99, NA)
+
+reader_s.ed$educ <- factor(reader_s.ed$educ, labels = c("lt_hs", "hs_incom", "hs_grad", "col_no_deg", "as_deg", "bach", "postgrad_no_deg", "postgrad", "refused"), ordered = TRUE)
+
+reader_s.ed$race <- factor(reader_s.ed$race, labels = c("white", "black", "asian", "mixed", "indian", "other",
+                                                          "refused"))
+
+reader_s.ed$income <- factor(reader_s.ed$income, labels = c("lt_10k", "10k-19k", "20k-29k", "30k-39k", "40k-49k",
+                                                            "50k-74k", "75k-99k", "100k-149k", "mt_150k", "refused"), ordered = TRUE)
+
+```
+
+```{r echo=FALSE}
+
+age_breaks <- c(17, 29, 49, 64, 97)
+reader_s.ed$age_buckets <- cut(reader_s.ed$age, breaks = age_breaks)
+
+```
+
+
+# Univariate Plots Section
+
+***
+
+Let me introduce the data set.
+
+Citation:
+
+>The PSRAI January 2014 Omnibus Week 1 obtained telephone interviews with a nationally representative sample of 1,005 adults living in the continental United States. Telephone interviews were conducted by landline (500) and cell phone (505, including 268 without a landline phone). The survey was conducted by Princeton Survey Research Associates International (PSRAI).
+...
+
+
+>This omnibus survey contains questions about reading, e-reading, and various electronic devices.
+
+source: http://www.pewinternet.org/datasets/january-2014-e-reading-and-gadgets-omnibus/
+
+***
+
+Dimentions of data - 1005 observations, 23 variables plus one bucketed (45 originally): 
+```{r echo=FALSE, Univariate_Plots}
+
+dim(reader_s.ed)
+
+#dimentions of data. 1005 observation
+
+```
+
+Names of variables (renamed during data wrangling):
+
+```{r echo=FALSE}
+
+names(reader_s.ed)
+
+```
+
+```{r echo=FALSE}
+
+
+str(reader_s.ed)
+
+```
+
+```{r echo=FALSE}
+
+tblFun <- function(x){
+    tbl <- table(x)
+    res <- cbind(tbl,round(prop.table(tbl)*100,2))
+    colnames(res) <- c('Count','Percentage')
+    res
+}
+
+```
+
+
+How many respondents have a cell phone?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$has_cellph)
+
+```
+
+How many respondents have a desktop or laptop computer?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$has_comp)
+
+```
+
+How many respondents have a device made primarily for e-book reading?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$has_ereader)
+
+```
+
+How many respondents have a tablet computer?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$has_tablet)
+
+```
+
+How many smarphones are among cell phones?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$is_smart)
+
+```
+
+Where any of books, readed in the past 12 month, printed books?
+
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_printedb)
+
+```
+
+Where any of books, readed in the past 12 month, audiobooks?
+
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_audiob)
+
+```
+
+Where any of books, readed in the past 12 month, electronic books?
+
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_ebook)
+
+```
+
+How often electronic books were read on tablet computer?
+
+***
+eday = every day or almost every day
+
+ft_we = few times a week
+
+ft_mo = few times a month
+
+less = less often 
+
+not_dev = do not read e-books on this device
+
+***
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_eb_tablet)
+
+```
+
+How often electronic books were read on e-book reader?
+
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_eb_ereader)
+
+```
+
+How often electronic books were read on desktop or laptop?
+
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_eb_comp)
+
+```
+
+How often electronic books were readed on cell phone?
+
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_eb_cellph)
+
+```
+
+How many respondents read book yesterday?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$r_yesterday)
+
+```
+
+What is the distribution of employment status among respondents?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$employ)
+
+```
+
+How many parents are among respondents?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$parent)
+
+```
+
+What is the gender distribution?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$gender)
+
+```
+
+What is the age distribution?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$age_buckets)
+
+```
+
+What is the distribution of education level?
+
+***
+lt_hs = Less than high school (Grades 1-8 or no formal schooling)
+
+hs_incom = High school incomplete (Grades 9-11 or Grade 12 with NO diploma)
+
+hs_grad = High school graduate (Grade 12 with diploma or GED certificate)
+
+col_no_deg = Some college, no degree (includes community college)
+
+as_deg = Two year associate degree from a college or university
+
+bach = Four year college or university degree/Bachelor’s degree (e.g., BS, BA, AB)
+
+postgrad_no_deg = Some postgraduate or professional schooling, no postgraduate degree
+
+postgrad = Postgraduate or professional degree, including master’s, doctorate, medical or law degree (e.g., MA, MS, PhD, MD, JD)
+
+***
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$educ)
+
+```
+
+What is the ethnic distribution among respondents?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$race)
+
+```
+
+What is the distribution of income among respondents?
+
+```{r echo=FALSE}
+
+tblFun(reader_s.ed$income)
+
+```
+
+```{r echo=FALSE}
+
+summary(reader_s.ed)
+
+```
+
+Let us look on the histogram of the number of books, readed for the last 12 month:
+
+```{r echo=FALSE}
+
+ggplot(aes(n_readed), data = reader_s.ed) + geom_bar(binwidth = 1) + ggtitle("Number of books read")
+
+```
+
+Distribution in skewed and obscured by the first bar - 0 books, and that is the most frequent number of books, readed by respondents of the survey (!)
+So I will try to figure out something more interesting from the plot, with log10-transformed x-axis:
+
+```{r echo=FALSE}
+
+qplot(n_readed, data = reader_s.ed, binwidth = 0.01) + scale_x_log10() + ggtitle("Number of books read - log10 scale")
+
+```
+
+A little better - 0 value vanished and we can see more clearly, that among those, who read some books, 3 is the most popular amount. Also, we can see, that, as it is hard to tell for sure, multipliers of 5 - 5, 10, 15, 20, 25, 30, 50 are more usual answers.
+
+NOTE: 97 means "97 or more".
+
+***
+Later we will slice this data by the levels of other variables to answer a questions like: what kind of people read 0 books? Young or order? Maybe education level is playing part? Do people with children read books to them? Do those, who have electronic devises for reading read more books?
+
+***
+
+For now, I want to investigate individual variables more.
+
+How many respondents have an electronic devices?
+
+```{r echo=FALSE}
+
+qplot(has_cellph, data = reader_s.ed) + ggtitle("Have cell phone?")
+
+```
+~ 93% has, ~ 6% doesn't have a cell phone.
+
+And how many smartphones among those cell phones?
+
+```{r echo=FALSE}
+
+qplot(is_smart, data = reader_s.ed) + ggtitle("Cell phone is smartphone")
+
+```
+~ 54% smartphones, ~ 40% stupidphones.
+
+```{r echo=FALSE}
+
+qplot(has_comp, data = reader_s.ed) + ggtitle("Have computer or laptop?")
+
+```
+~ 76% has, ~ 22% doesn't have a computer or laptop.
+
+```{r echo=FALSE}
+
+qplot(has_ereader, data = reader_s.ed) + ggtitle("Have ereader?")
+
+```
+~ 32% has, ~ 67% doesn't have a device made primarily for e-book reading.
+
+```{r echo=FALSE}
+
+qplot(has_tablet, data = reader_s.ed) + ggtitle("Have tablet?")
+
+```
+~ 42% has, ~ 58% doesn't have a tablet computer.
+
+***
+
+Distribution of ages:
+
+```{r echo=FALSE}
+
+qplot(age, data = reader_s.ed, binwidth = 1)
+
+```
+
+the same, devided by groups:
+
+```{r echo=FALSE}
+
+qplot(age_buckets, data = reader_s.ed)
+
+```
+
+Most people are adults in their 49 - 64.
+
+NOTE: minimal age of respondent is 18 years.
+
+***
+Races:
+
+```{r echo=FALSE}
+
+qplot(race, data = reader_s.ed)
+
+```
+
+Whites are the most represented group.
+
+***
+Education level:
+
+```{r echo=FALSE}
+
+qplot(educ, data = reader_s.ed)
+
+```
+
+Most respondents have completed education, high school graduates are most numerous (~ 27%)
+
+***
+Income:
+
+```{r echo=FALSE}
+
+qplot(income, data = reader_s.ed)
+
+```
+
+Most respondents refused to report their income; distribution looks "bimodal" - two distinct groups are $20,000 - $30,000 and $50,000 - $75,000 of yearly income.
+
+***
+Employment:
+
+```{r echo=FALSE}
+
+qplot(employ, data = reader_s.ed)
+
+```
+
+Almost 50 - 50: half of the respondents are fully or partly employed, half - unemployed.
+
+***
+Gender:
+
+```{r echo=FALSE}
+
+qplot(gender, data = reader_s.ed)
+
+```
+
+48% males, 52% females.
+
+How many of them are parents?
+
+```{r echo=FALSE}
+
+qplot(parent, data = reader_s.ed)
+
+```
+
+~24% have children, ~78% don't have children.
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+
+There are 1005 observations in the dataset - answers of the 1005 U.S. residents to the set of questions (results of the poll) concerning reading of books. 21 of 23 choosen variables are categorical (factors) and 2 - **n_readed** (number of books read in the last 12 month) and **age** are integer.
+
+Factor variables include:
+
+**has_cellph** (does respondent have cell phone) - yes, no, don't know, refused
+
+**has_comp** (does respondent have a computer or laptop) - yes, no, refused
+
+**has_ereder** (does respondent have a device made primarily for e-book reading) - yes, no, don't know, refused
+
+**has_tables** (does respondent have a tablet computer) - yes, no, don't know, refused
+
+**is_smart** (is respondent's cell phone in smartphone) - yes, no, don't know, refused
+
+**r_printedb** (were any of books read in the last 12 month printed books) - yes, no, don't know, refused
+
+**r_audiob** (were any of books read in the last 12 month audiobooks) - yes, no, don't know
+
+**r_ebook** (were any of books read in the last 12 month e-books) - yes, no, don't know
+
+**r_eb_tablet** (how often does respondent read e-books on a tablet computer) - e_day (every day), ft_week (few times a week), ft_mo (few time a month), less (less often then previous), not_dev (do not read e-books on this device)
+
+**r_ed_ereader** (how often does respondent read e-books on a device made primarily for e-book reading) - levels are same as in r_eb_tablet
+
+**r_ed_com** (how often does respondent read e-books on a computer or laptop) - levels are same as in r_eb_tablet
+
+**r_ed_cellph** (how often does respondent read e-books on a cell phone) - levels are same as in r_eb_tablet
+
+**r_yesterday** (did respondent read book yesterday) - yes, no
+
+**employ** (employment of the respondent) - f_time (full time employed), p_time (part time employed), not(unemployed), refused
+
+**parent** (does respondent a parent) - yes, no
+
+**gender** - male, female
+
+**educ** (education level of the respondent) - ordered factor - from top to buttom > . > . > ... > .:
+
+lt_hs = Less than high school (Grades 1-8 or no formal schooling)
+
+hs_incom = High school incomplete (Grades 9-11 or Grade 12 with NO diploma)
+
+hs_grad = High school graduate (Grade 12 with diploma or GED certificate)
+
+col_no_deg = Some college, no degree (includes community college)
+
+as_deg = Two year associate degree from a college or university
+
+bach = Four year college or university degree/Bachelor’s degree (e.g., BS, BA, AB)
+
+postgrad_no_deg = Some postgraduate or professional schooling, no postgraduate degree
+
+postgrad = Postgraduate or professional degree, including master’s, doctorate, medical or law degree (e.g., MA, MS, PhD, MD, JD)
+
+**race** - white, black, asian, mixed, indian, other, refused
+
+**income** - ordered factor - less than $10,000 a year < $10,000 - $20,000 a year < ...< more than $150,000 a year, refused
+
+***
+some observations:
+
+Median number of books, read in the last 12 month is 5, though most respondents didn't read a books in last 12 month at all, 
+
+most respondents have cell phone, though only 54% of them - smartphones. And some (maybe elderly) people can't distinguish smartphones,
+
+people still read printed books! - 92% of respondents, who read at least one book, read at least one printed book,
+
+respondents, who have a device, made primarily for e-book reading, more likely to read books every day.
+
+### What is/are the main feature(s) of interest in your dataset?
+
+The main features are number of books readed and frequency of reading books. I will try to investigate, what factor variables contribute to main features. For now I suspect, that having a special device increase number of read books, but what about printed books? Maybe, age?
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+Parenthood, education, employment and income may be assossiated with the reading habits.
+
+### Did you create any new variables from existing variables in the dataset?
+
+I made age "buckets" to represent stages of life (to made associations more clear, to use this feature for coloring of plots, ...)
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+While wrangling the data I renamed variables, made factors, some with ordering, deleted "bad" values from future integer variables (i.e. got rid of "don't know" and "refused" levels in them). But, generally, no major ideological changes. 
+
+Log10-transformed distribution of number of books, read in last 12 month, for the better view of the long-tailed distribution.
+
+# Bivariate Plots Section
+
+First I will check my theory, that age and number of books read are associated.
+
+```{r echo=FALSE, Bivariate_Plots}
+
+ggplot(aes(x = age, y = n_readed), data = reader_s.ed) + geom_jitter()
+
+```
+
+well, can't see anything interesting. Let me try a touch of a color (group by have/don't have special e-reader) and a transformation of y axis (to make plot a little denser):
+
+```{r echo = FALSE}
+
+ggplot(aes(x = age, y = n_readed), data = reader_s.ed) + geom_jitter(aes(color = has_ereader)) +
+    scale_y_log10()
+aggregate(n_readed ~ has_ereader, reader_s.ed, median)
+
+```
+
+Looks like the red dots - those, who have special e-reader device, prevail on the upper part of the plot. But still - I can't see any association between number of books read and age. Comparing mean and median values by age_buckets:
+
+```{r echo=FALSE}
+
+aggregate(n_readed ~ age_buckets, reader_s.ed, mean)
+aggregate(n_readed ~ age_buckets, reader_s.ed, median)
+
+```
+I conclude, that thare is almost no difference in age groups, but distributions for the upper age groups are more skewed:
+
+```{r echo=FALSE}
+
+ggplot(aes(x = age_buckets, y = n_readed), data = reader_s.ed) + geom_boxplot()
+
+```
+
+Let's look at the other variables. Does number of read books differ significantly for the income groups?
+
+```{r echo=FALSE}
+
+ggplot(aes(x = income, y = n_readed), data = reader_s.ed) + geom_boxplot()
+
+```
+
+interesting, maybe we cought something. Closer look:
+
+```{r echo=FALSE}
+
+ggplot(aes(x = income, y = n_readed), data = reader_s.ed) + geom_boxplot() +
+    coord_cartesian(ylim = c(0, 40))
+
+```
+
+seems like there is an association - on average, people with higher income tend to read more books. Check with aggregate():
+
+```{r echo=FALSE}
+
+aggregate(n_readed ~ income, reader_s.ed, median)
+
+```
+
+Employment can be correlated with income. I will try it:
+
+```{r echo=FALSE}
+
+ggplot(aes(x = employ, y = n_readed), data = reader_s.ed) + geom_boxplot()
+aggregate(n_readed ~ employ, reader_s.ed, median)
+
+```
+
+No, there is no difference detween income groups.
+
+What about parenthood?
+
+```{r echo=FALSE}
+
+ggplot(aes(x = parent, y = n_readed), data = reader_s.ed) + geom_boxplot()
+aggregate(n_readed ~ parent, reader_s.ed, median)
+
+```
+"not parent" group is more skewed, so it's mean will be higher, than in "parent" group. There is no difference in medians.
+
+Education? 
+
+```{r echo=FALSE}
+
+ggplot(aes(x = educ, y = n_readed), data = reader_s.ed) + geom_boxplot()
+aggregate(n_readed ~ educ, reader_s.ed, median)
+
+```
+
+Postgraduates, preparing for degree, read most? Picture resemble one with the income levels. 
+Closer look:
+
+```{r echo=FALSE}
+
+ggplot(aes(x = educ, y = n_readed), data = reader_s.ed) + geom_boxplot() +
+    coord_cartesian(ylim = c(0, 55))
+
+```
+
+
+What about frequency of reading electronic books? As it was said previously, there might be association with the "have one or another device" variables.
+
+```{r echo=FALSE}
+
+devices <- rbind(table(reader_s.ed$r_eb_tablet), table(reader_s.ed$r_eb_ereader)[1:5], table(reader_s.ed$r_eb_comp), table(reader_s.ed$r_eb_cellph))
+
+rownames(devices) <- c("r_eb_tablet", "r_eb_ereader", "r_eb_comp", "r_eb_cellph")
+
+mosaicplot(devices, color = palette(rainbow(n = 5, start = 5/6, end = 1/6)), 
+           main = "Frequency of reading by devices")
+
+```
+
+From this picture we can see, that computers and cell phones are used for reading electronic books much more rarely, than tablets and e-books readers. Those, who have e-book readers, tend to read e-books most frequently.
+
+Now - one last question - do those, who have magic devices, made primarily for e-book reading, still read paper books?
+
+```{r echo=FALSE}
+
+readp_yn <- table(reader_s.ed$has_ereader, reader_s.ed$r_printedb)[1:2, 1:2]
+rownames(readp_yn) <- c("have_ereader", "dn_have_ereader")
+readp_yn
+mosaicplot(readp_yn, color = palette(heat.colors(n = 2)))
+```
+
+Yes, they still read paper books. Of course, those, who read at least one paper book in the past 12 month and don't have special device, more, but difference is not huge. 
+
+It seems obvious, that if somebody have e-book reader, he or she will read at least one book from it. Right?
+
+
+```{r echo=FALSE}
+reade_yn <- table(reader_s.ed$has_ereader, reader_s.ed$r_ebook)[1:2, 1:2]
+rownames(reade_yn) <- c("have_ereader", "dn_have_ereader")
+reade_yn
+mosaicplot(reade_yn, color = palette(heat.colors(n = 2)))
+```
+
+Wow, how can it be, that almost 35% of happy e-reader owners didn't read at least one electronic book in the past 12 month? We will investigate this questions in more details in the next section.
+
+```{r echo=FALSE}
+
+plot(income ~ educ, data = reader_s.ed)
+
+```
+
+```{r echo=FALSE}
+
+#ggplot(aes(x = has_ereader, y = r_ebook), data = subset(reader_s.ed, !is.na(r_ebook) & !r_ebook == "d_no" & !r_ebook == "refused" & !has_ereader == "d_no" & !has_ereader == "refused")) + geom_jitter(aes(color = age_buckets)) + scale_color_brewer(type = 'div')
+
+mosaicplot(table(reader_s.ed$age_buckets, reader_s.ed$is_smart), 
+           color = palette(heat.colors(n = 4)))
+```
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+I've found three features, that positively correlated with the number of books read. 
+
+First is whether one has or doesn't have e-reader. Respondents, who have e-readers tend to read more books (no causation!). 
+
+Second is income. Each next level of income has slightly higher median value of read books. 
+
+Third is educational level. Postgraduates, who doesn't have degree are the most enthusiastic readers. Maybe it is due to preparing for the degree exam.
+
+Concerning frequency reading. Owners of the e-book readers and tablet computers are tend to read electronic books more frequently. More, than 56% of respondents don't read electronic books on computers and cell phones. 
+
+And even if somebody has a e-book reader, he or she still tend to read printed books.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+Education level and income level are positivaly correlated, though age can be confounding variable. And older people have more cell phones, which are not smartphones.
+
+More interesting is that among those, who have e-readers, 35% doesn't read any electronic books during the last year.
+
+Those, who have e-readers, tend to have tablet computers too.
+
+### What was the strongest relationship you found?
+
+I believe that relation between income and number of books read is worth mentioning. Though it is not very strong relation, but the most interesting from all my findings.
+
+# Multivariate Plots Section
+
+Now I will combine variables, that was found to be interesting in the previous section.
+
+Education level, number of books read and e-reader:
+
+```{r echo=FALSE, Multivariate_Plots}
+
+ggplot(aes(x = educ, y = n_readed), data = subset(reader_s.ed, !is.na(r_ebook) & !r_ebook == "d_no" & !r_ebook == "refused" & !has_ereader == "d_no" & !has_ereader == "refused")) + geom_jitter(aes(color = has_ereader)) + scale_y_log10()
+
+```
+
+Right upper corner looks slighlty more reder!
+
+Income level, number of books read and e-reader:
+
+```{r echo=FALSE}
+
+ggplot(aes(x = income, y = n_readed), data = subset(reader_s.ed, !is.na(r_ebook) & !r_ebook == "d_no" & !r_ebook == "refused" & !has_ereader == "d_no" & !has_ereader == "refused")) + geom_jitter(aes(color = has_ereader)) + scale_y_log10()
+
+```
+
+Even better!
+
+And, one more meaningful visualisation. I decide to devide every number of books read by groups of devices, owned by respondents, who read this number of books.
+Let us look at the result:
+
+```{r echo=FALSE}
+
+by_n.device.ed <- reader_s.ed %>% 
+    group_by(n_readed, 
+             has_cellph == "yes", 
+             has_comp == "yes", 
+             has_ereader == "yes", 
+             has_tablet == "yes") %>% 
+    summarise(n = n()) %>% 
+    filter(n >= 5) %>%
+    arrange(n_readed) 
+
+names(by_n.device.ed) <- c("n_readed", "has_cellph", "has_comp", "has_ereader", "has_tablet", "n")
+
+by_n.device.ed$has_cellph <- replace(by_n.device.ed$has_cellph, by_n.device.ed$has_cellph == TRUE, "cellph_Y")
+by_n.device.ed$has_cellph <- replace(by_n.device.ed$has_cellph, by_n.device.ed$has_cellph == FALSE, "cellph_N")
+
+by_n.device.ed$has_comp <- replace(by_n.device.ed$has_comp, by_n.device.ed$has_comp == TRUE, "comp_Y")
+by_n.device.ed$has_comp <- replace(by_n.device.ed$has_comp, by_n.device.ed$has_comp == FALSE, "comp_N")
+
+by_n.device.ed$has_ereader <- replace(by_n.device.ed$has_ereader, by_n.device.ed$has_ereader == TRUE, "ereader_Y")
+by_n.device.ed$has_ereader <- replace(by_n.device.ed$has_ereader, by_n.device.ed$has_ereader == FALSE, "ereader_N")
+
+by_n.device.ed$has_tablet <- replace(by_n.device.ed$has_tablet, by_n.device.ed$has_tablet == TRUE, "tablet_Y")
+by_n.device.ed$has_tablet <- replace(by_n.device.ed$has_tablet, by_n.device.ed$has_tablet == FALSE, "tablet_N")
+
+by_n.device.ed
+
+comb <- unite(by_n.device.ed, owned_devs, has_cellph, has_comp, has_ereader, has_tablet, sep = ",")
+
+ggplot(aes(x = n_readed, y = n), data = comb) + geom_bar(aes(fill = owned_devs), stat = "identity") + 
+     scale_fill_brewer(type = "div") +
+     theme(legend.text = element_text(size=8))
+
+```
+
+I left only those rows, that contain more than 5 observation (in the original table I had 24 possible combinations, so it was hard to distinguish colors).
+
+Here we can see, that: among those, who hadn't read anything those, who have at least one compact devise for reading (e-books reader or tablet) is the smallest group (among all numbers of books read), lagest part is those, who doesn't have neither spesial e-books reader, nor tablet. People, who have non of possible devices (computer, cell phone, e-reader or tablet) appear only in the "0 books read" and "2 books read". 
+
+It is quite visibly, than when we move to the larger amount of books read, groups, that owned at least one compact devise become lager and larger.
+
+And there is two types of people, who read most (my friend)) - those who have both e-reader and tablet and those, who don't have neither.
+
+I also tried to investigate how is it possible, that some have e-reader, but doesn't read from it.
+It is my attempt in graphical form:
+
+```{r echo=FALSE}
+
+ggplot(aes(x = has_ereader, y = r_ebook), data = subset(reader_s.ed, !is.na(r_ebook) & !r_ebook == "d_no" & !r_ebook == "refused" & !has_ereader == "d_no" & !has_ereader == "refused")) + geom_jitter(aes(color = age_buckets)) + scale_color_brewer(type = "seq", palette = 3)
+
+```
+
+Question is - what is the distinc feature of people in the upper left corner? I applied different variables for coloring and only with the age it seems, that we have slighly more people from 64 and 97 years there. In the lower right corner (not have e-reader and didn't read electronic book last year) this group, on the contrary, is the smallest.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+Such features as income level and owning a special device (favourites from the previous section), for reading e-books, do a good job together. Higher income plus owning a device predict potent to reading higher number of books decently. 
+
+Also, I made a grouping by owned devices, and comes to quite interesting conclusions. More above (or below).
+
+### Were there any interesting or surprising interactions between features?
+
+Among those, who hadn't read anything those, who have at least one compact devise for reading (e-books reader or tablet) is the smallest group (among all numbers of books read), lagest part is those, who doesn't have neither spesial e-books reader, nor tablet. People, who have non of possible devices (computer, cell phone, e-reader or tablet) appear only in the "0 books read" and "2 books read". 
+
+It is quite visibly, than when we move to the larger amount of books read, groups, that owned at least one compact devise become lager and larger.
+
+And there is two types of people, who read most (my friend)) - those who have both e-reader and tablet and those, who don't have neither.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+
+ggplot(aes(n_readed), data = reader_s.ed) + geom_bar(binwidth = 1, fill = I("darkolivegreen4"), alpha = 0.6) + ggtitle("Number of books read")
+
+```
+
+### Description One
+
+This is original distribution of books read. I want to show it, because it struck me, that 206 from 1005 people in sample didn't read a one single book in the last year. General question was - why so many people don't read? And what is the features of people, who read more and less?
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+
+ggplot(aes(x = income, y = n_readed), data = reader_s.ed) + geom_boxplot(aes(fill = income)) +
+    coord_cartesian(ylim = c(0, 40)) +
+    ggtitle("Number of books read by income level")
+
+ggplot(aes(x = income, y = n_readed), data = subset(reader_s.ed, !is.na(r_ebook) & !r_ebook == "d_no" & !r_ebook == "refused" & !has_ereader == "d_no" & !has_ereader == "refused")) + geom_jitter(aes(color = has_ereader)) + scale_y_log10() +
+    ggtitle("Number of books read by income level and e-reader owning")
+
+```
+
+### Description Two
+
+First observation - how median number of books read increase with levels of income and second - with the additional feature - owning e-book reader. High income and owning a device a characteristic for people, who read more books (for this sample). 
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+
+ggplot(aes(x = n_readed, y = n), data = comb) + geom_bar(aes(fill = owned_devs), stat = "identity") + 
+     scale_fill_brewer(type = "div") +
+     theme(legend.text = element_text(size=8))
+
+```
+
+### Description Three
+
+
+And here is some answer for the original example - those, who didn't read for the most part don't have a compact device for reading. Those, who have a tablet or e-books reader tend to read more.
+------
+
+# Reflection
+
+Pew's data set contain 1005 sets of answers (each set of answers = one respondent) about reading. Most of the variables in this data set are categorical, numerical variables is age - which, in fact, better in the bucketed form, so more or less categorical too. So I worked with one numerical variable, that imposes some restrictions on the form of graphs. Also, this set is not very handy for using modeling techniques. Nevertheless, I've found some quite interesting, but obvious associations. I suggested, that the age is correlated with the number of books read, and was surprised, that education level and income level are better predictors. And it is interesting, that those who read, still read printed books. Maybe, not environmental friendly, but e-book reader can't give one satisfactory tactile sensation. 
+
+# A list of Web sites, books, forums, blog posts, github repositories, etc. that you referred to or used in creating your submission
+
+N/A (R documentation sometimes)
