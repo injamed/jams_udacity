@@ -14,13 +14,18 @@ from sklearn.preprocessing import MinMaxScaler
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi', 'deferred_income', 'restricted_stock', 'expenses', 'bonus',
+features_list = ['poi', 'deferred_income', 'restricted_stock', 'bonus', 'expenses',
                  'salary', 'exercised_stock_options'] # You will need to use more features
 
 all_financial_features = ['salary', 'deferral_payments', 'total_payments', 'loan_advances', 'bonus',
                           'restricted_stock_deferred', 'deferred_income', 'total_stock_value', 'expenses',
                           'exercised_stock_options', 'other', 'long_term_incentive', 'restricted_stock',
                           'director_fees']
+
+all_mailing_features = ['to_messages', 'from_poi_to_this_person', 'from_messages',
+                        'from_this_person_to_poi', 'shared_receipt_with_poi', 'percent_shared_with_poi']
+
+all_features = ['poi'] + all_financial_features + all_mailing_features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -186,13 +191,24 @@ for key,value in data_dict.iteritems():
 my_dataset = data_dict
 
 ### Extract features and labels from dataset for local testing
+#data = featureFormat(my_dataset, features_list, sort_keys = True)
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
 # Feature selection with SelectKBest
 # from sklearn.feature_selection import SelectKBest
-# selector = SelectKBest(k=3)
-# selected_features = selector.fit(features, labels)
+# selector = SelectKBest(k=10)
+# selected_features = selector.fit_transform(features, labels)
+# feature_scores = selector.scores_
+# selected_features_names = [all_features[i+1] for i in selector.get_support(indices=True)]
+# selected_features_scores = [feature_scores[i] for i in selector.get_support(indices=True)]
+# selected_features_ns = sorted(zip(selected_features_names, selected_features_scores), key=lambda tup: tup[1],
+#                               reverse=True)
+#
+# print()
+# print('Best features automated search output:')
+# for it in selected_features_ns:
+#     print it
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.

@@ -281,7 +281,7 @@ E.G.:</p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In short:</p>
+<p>First iteration of selected features:</p>
 
 </div>
 </div>
@@ -328,6 +328,46 @@ E.G.:</p>
 <blockquote><p>estimators = [('scaling', MinMaxScaler()), ('classifying', AdaBoostClassifier())]
 clf = Pipeline(estimators)</p>
 </blockquote>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Then I've used SelectKBest() function to check my intuition. Here is the output of selected features+scores:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<blockquote><p>('exercised_stock_options', 25.097541528735491)</p>
+<p>('total_stock_value', 24.467654047526398)</p>
+<p>('bonus', 21.060001707536571)</p>
+<p>('salary', 18.575703268041785)</p>
+<p>('deferred_income', 11.595547659730601)</p>
+<p>('long_term_incentive', 10.072454529369441)</p>
+<p>('percent_shared_with_poi', 9.9359434944622524)</p>
+<p>('restricted_stock', 9.3467007910514877)</p>
+<p>('total_payments', 8.8667215371077717)</p>
+<p>('shared_receipt_with_poi', 8.7464855321290802)</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Without totals and mailing features my first list looks very much the same; I experimented - changed "expenses" in favour of the "long_term_incentive", eliminate "expenses" at all, just add "long_term_incentive". In all these cases performance of the algorithm was worse, than with the original list, so, in the end, I decided not to change the list - ['poi', 'deferred_income', 'restricted_stock', 'expenses', 'bonus', 'salary', 'exercised_stock_options'].</p>
 
 </div>
 </div>
@@ -408,7 +448,8 @@ clf = Pipeline(estimators)</p>
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Combination and experimentation with parameters are necessary, as the form of the decision boundary can change dramatically - from very rigid, that fits well training data, but is too specific for generalization, to too general, which may not catch specific trends. It this case I assume, that changing the number of nearest neighbours may change the label of the point, if the point is or is not in the knot of the points of the same class.</p>
+<p>Tuning is essentially selecting the best parameters for an algorithm to optimize its performance. In previous example, GridSearch is an automated process for doing this. This algorithm is doing 3-fold validation of the score metric (output here is the mean value), which reflects the performance with the chosen parameters. By comparing this values of the score with the different sets of parameters, we can find one with the best performance (the highest value of the metric). 
+Parameters affect mechanics of algorithms greatly, for example, in the SVM linear separation of classes can be done easily with some kernels ('kernel' parameter) and can not be done with the other.</p>
 
 </div>
 </div>
@@ -514,7 +555,7 @@ Total predictions: 15000    True positives:  104    False positives:  343    Fal
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Testing process in poi_id.py + tester.py engineered correctly.</p>
+<p>tester.py is using the cross_validation.StratifiedShuffleSplit (<a href="http://scikit-learn.org/stable/modules/cross_validation.html#cross-validation">http://scikit-learn.org/stable/modules/cross_validation.html#cross-validation</a>) to make fitting and testing with 1000 random 70%/30% training/testing data splits and report the average performance. So we change training and testing data many times to be sure, that classification algorithm do not follow the structure of (one) training set to closely.</p>
 
 </div>
 </div>

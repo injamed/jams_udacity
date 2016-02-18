@@ -5,9 +5,9 @@ aS'deferred_income'
 p2
 aS'restricted_stock'
 p3
-aS'expenses'
-p4
 aS'bonus'
+p4
+aS'expenses'
 p5
 aS'salary'
 p6
