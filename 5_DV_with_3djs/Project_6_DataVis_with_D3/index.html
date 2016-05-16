@@ -4,12 +4,13 @@
     <meta charset="utf-8">
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
       <style>
       </style>
 
     <script type="text/javascript">
 
-    function draw(topo_data) {
+    function draw() {
 
       var width = 1600,
           height = 1200;
@@ -20,16 +21,37 @@
           .append('g')
           .attr('class', 'map');
 
-      var projection = d3.geo.mercator()
-          .scale(500)
-          .center([-40, 33])
-          .translate([width/2, height/2]);
+      $.getJSON("usa_topo.json", function(topo_data) 
+      {
+
+      var projection = d3.geo.albersUsa()
+          .scale(600)
+          .translate([width/4, height/3]);
 
       var path = d3.geo.path().projection(projection);
 
       var map = svg.append("path")
-                .datum(topojson.feature(topo_data, topo_data.objects.ua_usa))
+                .datum(topojson.feature(topo_data, topo_data.objects.usa))
                 .attr("d", path);
+    
+      });
+
+      $.getJSON("ukr_topo.json", function(topo_data) 
+      {
+
+      var projection = d3.geo.mercator()
+          .scale(900)
+          .center([34, 48])
+          .translate([3*width/4, height/3]);
+
+      var path = d3.geo.path().projection(projection);
+            
+            var map = svg.append("path")
+                      .datum(topojson.feature(topo_data, topo_data.objects.ukr))
+                      .attr("d", path);
+          
+       });
+
 
     }
     </script>
@@ -39,7 +61,7 @@
 <body>
 
   <script type="text/javascript">
-  d3.json("ua_usa_topo.json", draw);
+  draw();
   </script>
 
 </body>
