@@ -6,22 +6,26 @@
     <script src="http://d3js.org/topojson.v1.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
       <style>
+        body {
+          text-align: center;}
       </style>
 
     <script type="text/javascript">
 
-    function draw() {
+    format = d3.time.format("%Y");
+
+    function draw(data) {
 
       var width = 1600,
-          height = 1200;
+          height = 800;
 
       var svg = d3.select("body").append("svg")
           .attr("width", width)
           .attr("height", height)
-          .append('g')
-          .attr('class', 'map');
+          .append("g")
+          .attr("class", "chart");
 
-      $.getJSON("usa_topo.json", function(topo_data) 
+      usa = $.getJSON("usa_topo.json", function(topo_data) 
       {
 
       var projection = d3.geo.albersUsa()
@@ -36,7 +40,7 @@
     
       });
 
-      $.getJSON("ukr_topo.json", function(topo_data) 
+      ukr = $.getJSON("ukr_topo.json", function(topo_data) 
       {
 
       var projection = d3.geo.mercator()
@@ -46,14 +50,72 @@
 
       var path = d3.geo.path().projection(projection);
             
-            var map = svg.append("path")
-                      .datum(topojson.feature(topo_data, topo_data.objects.ukr))
-                      .attr("d", path);
+      var map = svg.append("path")
+                .datum(topojson.feature(topo_data, topo_data.objects.ukr))
+                .attr("d", path);
           
        });
 
+      var year_extent = d3.extent(data, function(d){
+        return d["year"];
+      });
+      
+      var year_scale = d3.time.scale()
+          .range([width/4, 3*width/4])
+          .domain(year_extent);
 
-    }
+      var filter_data = function(data, index, country){
+
+        var filteredData = [];
+        for (var i = 0; i < data.length; i++) {
+          if (data[i]["Series.Name.1"] === index) {
+            if (country === undefined) {
+              filteredData.push(data[i]);
+            } else {
+              if (data[i]["Country.Code"] === country) {
+                filteredData.push(data[i]);
+              }
+            }
+          }
+        }
+        return filteredData;
+      };
+
+      var index_extent = function(data, index) {
+        return d3.extent(filter_data(data, index), function(d) {
+              return d["value"];
+            });
+      };
+
+      
+      var select =  d3.select("body")
+          .append("div")
+          .append("select")
+          .attr("class", "dropdown");
+
+      var all_categories = [];
+      for (var i = 0; i < data.length; i++) {
+        all_categories.push({long_name : data[i]["Series.Name"],
+                             short_name : data[i]["Series.Name.1"]})
+      };
+
+      var categories = new Set();
+      var filtered_categories = [];
+      for (var i = 0; i < all_categories.length; i++) {
+        if (!categories.has(all_categories[i].long_name)){
+          categories.add(all_categories[i].long_name);
+          filtered_categories.push(all_categories[i]);
+        };
+      };
+
+      select.selectAll("option")
+          .data(filtered_categories)
+          .enter()
+          .append("option")
+          .attr("value", function(d) {return d.short_name})
+          .text(function(d) {return d.long_name});
+
+    };
     </script>
 
   </head>
@@ -61,7 +123,12 @@
 <body>
 
   <script type="text/javascript">
-  draw();
+  d3.csv("ua_usa_red.csv", function(d) {
+        d["value"] = +d["value"];
+        d["year"] = format.parse(d["year"]);
+        return d;
+    }, draw);
+  //draw();
   </script>
 
 </body>
