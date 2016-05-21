@@ -15,7 +15,6 @@
     format = d3.time.format("%Y");
 
     function draw(data) {
-
       var width = 1600,
           height = 800;
 
@@ -87,7 +86,53 @@
             });
       };
 
-      
+      var newest_data_same_year = function(data, index) {
+        var filteredData = filter_data(data, index);
+        var associativeArray = {};
+        for (var i = 0; i < filteredData.length; i++) {
+          var year = filteredData[i]["year"];
+          if (associativeArray.hasOwnProperty(year)) {
+            associativeArray[year].push(filteredData[i]);
+          } else { 
+              associativeArray[year] = [filteredData[i]];
+          }
+        }
+        var sorted_years = get_keys(associativeArray).sort().reverse();
+        console.log(sorted_years);
+        for (var i = 0; i < sorted_years.length; i++) {
+          var current_year = sorted_years[i];
+          var all_for_current_year = associativeArray[current_year];
+          if (!isNaN(all_for_current_year[0]["value"]) && 
+              !isNaN(all_for_current_year[1]["value"])) {
+            var ukr_value = 0;
+            var usa_value = 0;
+            if (all_for_current_year[0]["Country.Code"] === "UKR") {
+              ukr_value = all_for_current_year[0]["value"]
+              usa_value = all_for_current_year[1]["value"]
+            } else {
+              ukr_value = all_for_current_year[1]["value"]
+              usa_value = all_for_current_year[0]["value"]
+            }
+            return [current_year, usa_value, ukr_value];
+          }
+        }
+        return [current_year, 0, 0];
+      };
+
+      var get_keys = function(obj) {
+          var keys = [];
+          for(var key in obj)
+          {
+              if(obj.hasOwnProperty(key))
+              {
+                  keys.push(key);
+              }
+          }
+          return keys;
+      };
+
+      debugger;
+
       var select =  d3.select("body")
           .append("div")
           .append("select")
@@ -116,6 +161,7 @@
           .text(function(d) {return d.long_name});
 
     };
+
     </script>
 
   </head>
@@ -125,7 +171,7 @@
   <script type="text/javascript">
   d3.csv("ua_usa_red.csv", function(d) {
         d["value"] = +d["value"];
-        d["year"] = format.parse(d["year"]);
+        //d["year"] = format.parse(d["year"]);
         return d;
     }, draw);
   //draw();
