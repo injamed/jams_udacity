@@ -7,62 +7,93 @@
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
       <style>
         body {
-          text-align: center;}
+          text-align: center;
+        }
+
+        .axis path {
+          fill: none;
+          stroke: lightgrey;
+        }
+
+        .axis font {
+          font-family: arial;
+          font-size: 0.9em;
+        }
+
       </style>
 
     <script type="text/javascript">
 
-    format = d3.time.format("%Y");
+    var format = d3.time.format("%Y")
 
     function draw(data) {
-      var width = 1600,
-          height = 800;
 
-      var svg = d3.select("body").append("svg")
+      var deleteTag = function(tagName) {
+        var element = document.getElementsByTagName(tagName);
+          for (index = element.length - 1; index >= 0; index--) {
+              element[index].parentNode.removeChild(element[index]);
+          }
+      }
+
+      deleteTag("svg");
+
+      var width = 1600,
+          height = 1000,
+          margin = 120,
+          vertical_correction = -84;
+
+      var svg = d3.select(".chart").append("svg")
           .attr("width", width)
           .attr("height", height)
           .append("g")
           .attr("class", "chart");
 
-      usa = $.getJSON("usa_topo.json", function(topo_data) 
-      {
+      //drawing filled contour of USA
+      //default color: black,
+      //should be changed dynamically according to the value
+      //in "GBN" column for the chosen index
+      var usa = $.getJSON("./usa_topo.json", function(topo_data) {
 
       var projection = d3.geo.albersUsa()
           .scale(600)
-          .translate([width/4, height/3]);
+          .translate([width/3, height/3]);
 
       var path = d3.geo.path().projection(projection);
 
       var map = svg.append("path")
                 .datum(topojson.feature(topo_data, topo_data.objects.usa))
                 .attr("d", path);
-    
+
       });
 
-      ukr = $.getJSON("ukr_topo.json", function(topo_data) 
-      {
+      //drawing filler contour of Ukraine
+      //...
+      ukr = $.getJSON("ukr_topo.json", function(topo_data) {
 
       var projection = d3.geo.mercator()
           .scale(900)
           .center([34, 48])
-          .translate([3*width/4, height/3]);
+          .translate([3*width/4.35, height/3]);
 
       var path = d3.geo.path().projection(projection);
-            
+
       var map = svg.append("path")
                 .datum(topojson.feature(topo_data, topo_data.objects.ukr))
                 .attr("d", path);
-          
+
        });
 
+      //finding the min and max values (extend) of the future time axis
       var year_extent = d3.extent(data, function(d){
         return d["year"];
       });
-      
+
+      //translate found (year) extent to the pixel representation
       var year_scale = d3.time.scale()
           .range([width/4, 3*width/4])
           .domain(year_extent);
 
+      //filter data for the chosen index and country (if given) on demand 
       var filter_data = function(data, index, country){
 
         var filteredData = [];
@@ -80,12 +111,22 @@
         return filteredData;
       };
 
+      //finding the min and max values (extend) of the future values axis
       var index_extent = function(data, index) {
         return d3.extent(filter_data(data, index), function(d) {
               return d["value"];
             });
       };
 
+      //translate found (index) extent to the pixel representation
+      var index_scale = function(data, index) {
+        return d3.scale.linear()
+          .range([height, height/1.7])
+          .domain(index_extent(data, index));
+        };
+
+      //finding the newest available data for both countries
+      //returns year and values of the given index for USA and UKR (this order)
       var newest_data_same_year = function(data, index) {
         var filteredData = filter_data(data, index);
         var associativeArray = {};
@@ -131,19 +172,28 @@
           return keys;
       };
 
-      debugger;
+      var select = undefined;
 
-      var select =  d3.select("body")
-          .append("div")
-          .append("select")
-          .attr("class", "dropdown");
+      if (document.getElementsByTagName("select").length == 0) {
 
+        //creating the dropdown list
+        select =  d3.select(".select")
+            .append("select")
+            .attr("class", "dropdown")
+            .attr("id", "dropdown")
+            .attr("onchange", "plot()");
+      } else {
+        select = d3.select("select");
+      }
+
+      //getting list of all values in the "Series" columns
       var all_categories = [];
       for (var i = 0; i < data.length; i++) {
         all_categories.push({long_name : data[i]["Series.Name"],
                              short_name : data[i]["Series.Name.1"]})
       };
 
+      //getting rid of the repeating names in the all_categories list
       var categories = new Set();
       var filtered_categories = [];
       for (var i = 0; i < all_categories.length; i++) {
@@ -153,12 +203,65 @@
         };
       };
 
+      //adding filtered (unique) names of the series (indexes) to the dropdown
       select.selectAll("option")
           .data(filtered_categories)
           .enter()
           .append("option")
           .attr("value", function(d) {return d.short_name})
           .text(function(d) {return d.long_name});
+
+    var year_axis = d3.svg.axis()
+                    .scale(year_scale)
+                    .ticks(d3.time.years, 2);
+
+    d3.select("svg")
+        .append('g')
+        .attr('class', 'x axis')
+        .attr('transform', "translate(0," + 11*height/12 + ")")
+        .call(year_axis);
+
+    var selected_index = document.getElementById("dropdown").value;
+
+    var index_axis = d3.svg.axis()
+                     .scale(index_scale(data, selected_index))
+                     .orient("left");
+
+    d3.select("svg")
+        .append('g')
+        .attr('class', 'y axis')
+        .attr('transform', "translate(" + (margin + 280) +  ", "
+         + vertical_correction + ")")
+        .call(index_axis);
+
+    var current_index_scale = index_scale(data, selected_index);
+
+    var lineGen = d3.svg.line()
+        .defined(function(d) {
+          return !isNaN(d.value);
+        })
+        .x(function(d) {
+          return year_scale(d.year);
+        })
+        .y(function(d) {
+          return current_index_scale(d.value);
+        });
+
+    d3.select("svg")
+        .append("svg:path")
+        .attr('d', lineGen(filter_data(data, selected_index, "UKR")))
+        .attr('transform', "translate(0, " + vertical_correction + " )")
+        .attr('stroke', 'blue')
+        .attr('stroke-width', 2)
+        .attr('fill', 'none');
+
+    d3.select("svg")
+        .append("svg:path")
+        .attr('d', lineGen(filter_data(data, selected_index, "USA")))
+        .attr('transform', "translate(0, " + vertical_correction + " )")
+        .attr('stroke', 'red')
+        .attr('stroke-width', 2)
+        .attr('fill', 'none');
 
     };
 
@@ -168,13 +271,22 @@
 
 <body>
 
+  <div class="chart"> </div>
+  <br/>
+  <div class="select"> </div>
+
   <script type="text/javascript">
-  d3.csv("ua_usa_red.csv", function(d) {
+
+  function plot() {
+      d3.csv("ua_usa_red.csv", function(d) {
         d["value"] = +d["value"];
-        //d["year"] = format.parse(d["year"]);
+        d["year"] = format.parse(d["year"]);
         return d;
     }, draw);
-  //draw();
+    };
+
+  plot();
+
   </script>
 
 </body>
