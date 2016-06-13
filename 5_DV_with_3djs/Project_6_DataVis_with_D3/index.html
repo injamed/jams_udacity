@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <script src="d3.legend.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
       <style>
         body {
@@ -18,6 +19,22 @@
         .axis font {
           font-family: arial;
           font-size: 0.9em;
+        }
+
+        .legend rect {
+          fill: white;
+          stroke: black;
+          opacity: 0.8;
+        }
+
+        .description {
+          font-family: arial;
+          font-size: 1.2em;
+        }
+
+        h2 {
+          font-family: arial;
+          font-size: 3.4em;
         }
 
       </style>
@@ -48,10 +65,48 @@
           .append("g")
           .attr("class", "chart");
 
+      var select = undefined;
+
+      if (document.getElementsByTagName("select").length == 0) {
+
+        //creating the dropdown list
+        select =  d3.select(".select")
+            .append("select")
+            .attr("class", "dropdown")
+            .attr("id", "dropdown")
+            .attr("onchange", "plot()");
+      } else {
+        select = d3.select("select");
+      }
+
+      //getting list of all values in the "Series" columns
+      var all_categories = [];
+      for (var i = 0; i < data.length; i++) {
+        all_categories.push({long_name : data[i]["Series.Name"],
+                             short_name : data[i]["Series.Code"]})
+      };
+
+      //getting rid of the repeating names in the all_categories list
+      var categories = new Set();
+      var filtered_categories = [];
+      for (var i = 0; i < all_categories.length; i++) {
+        if (!categories.has(all_categories[i].long_name)){
+          categories.add(all_categories[i].long_name);
+          filtered_categories.push(all_categories[i]);
+        };
+      };
+
+      //adding filtered (unique) names of the series (indexes) to the dropdown
+      select.selectAll("option")
+          .data(filtered_categories)
+          .enter()
+          .append("option")
+          .attr("value", function(d) {return d.short_name})
+          .text(function(d) {return d.long_name});
+
+      var selected_index = document.getElementById("dropdown").value;
+
       //drawing filled contour of USA
-      //default color: black,
-      //should be changed dynamically according to the value
-      //in "GBN" column for the chosen index
       var usa = $.getJSON("./usa_topo.json", function(topo_data) {
 
       var projection = d3.geo.albersUsa()
@@ -60,14 +115,14 @@
 
       var path = d3.geo.path().projection(projection);
 
-      var map = svg.append("path")
+      var usa_map = svg.append("path")
                 .datum(topojson.feature(topo_data, topo_data.objects.usa))
-                .attr("d", path);
-
+                .attr("d", path)
+                .attr("fill", fill_by_index(data, selected_index, "USA"))
+                .attr("fill-opacity", "0.6");
       });
 
       //drawing filler contour of Ukraine
-      //...
       ukr = $.getJSON("ukr_topo.json", function(topo_data) {
 
       var projection = d3.geo.mercator()
@@ -77,10 +132,11 @@
 
       var path = d3.geo.path().projection(projection);
 
-      var map = svg.append("path")
+      var ukr_map = svg.append("path")
                 .datum(topojson.feature(topo_data, topo_data.objects.ukr))
-                .attr("d", path);
-
+                .attr("d", path)
+                .attr("fill", fill_by_index(data, selected_index, "UKR"))
+                .attr("fill-opacity", "0.6");;
        });
 
       //finding the min and max values (extend) of the future time axis
@@ -98,7 +154,7 @@
 
         var filteredData = [];
         for (var i = 0; i < data.length; i++) {
-          if (data[i]["Series.Name.1"] === index) {
+          if (data[i]["Series.Code"] === index) {
             if (country === undefined) {
               filteredData.push(data[i]);
             } else {
@@ -139,7 +195,6 @@
           }
         }
         var sorted_years = get_keys(associativeArray).sort().reverse();
-        console.log(sorted_years);
         for (var i = 0; i < sorted_years.length; i++) {
           var current_year = sorted_years[i];
           var all_for_current_year = associativeArray[current_year];
@@ -172,45 +227,6 @@
           return keys;
       };
 
-      var select = undefined;
-
-      if (document.getElementsByTagName("select").length == 0) {
-
-        //creating the dropdown list
-        select =  d3.select(".select")
-            .append("select")
-            .attr("class", "dropdown")
-            .attr("id", "dropdown")
-            .attr("onchange", "plot()");
-      } else {
-        select = d3.select("select");
-      }
-
-      //getting list of all values in the "Series" columns
-      var all_categories = [];
-      for (var i = 0; i < data.length; i++) {
-        all_categories.push({long_name : data[i]["Series.Name"],
-                             short_name : data[i]["Series.Name.1"]})
-      };
-
-      //getting rid of the repeating names in the all_categories list
-      var categories = new Set();
-      var filtered_categories = [];
-      for (var i = 0; i < all_categories.length; i++) {
-        if (!categories.has(all_categories[i].long_name)){
-          categories.add(all_categories[i].long_name);
-          filtered_categories.push(all_categories[i]);
-        };
-      };
-
-      //adding filtered (unique) names of the series (indexes) to the dropdown
-      select.selectAll("option")
-          .data(filtered_categories)
-          .enter()
-          .append("option")
-          .attr("value", function(d) {return d.short_name})
-          .text(function(d) {return d.long_name});
-
     var year_axis = d3.svg.axis()
                     .scale(year_scale)
                     .ticks(d3.time.years, 2);
@@ -220,8 +236,6 @@
         .attr('class', 'x axis')
         .attr('transform', "translate(0," + 11*height/12 + ")")
         .call(year_axis);
-
-    var selected_index = document.getElementById("dropdown").value;
 
     var index_axis = d3.svg.axis()
                      .scale(index_scale(data, selected_index))
@@ -236,6 +250,7 @@
 
     var current_index_scale = index_scale(data, selected_index);
 
+    //creating line charts
     var lineGen = d3.svg.line()
         .defined(function(d) {
           return !isNaN(d.value);
@@ -251,17 +266,151 @@
         .append("svg:path")
         .attr('d', lineGen(filter_data(data, selected_index, "UKR")))
         .attr('transform', "translate(0, " + vertical_correction + " )")
-        .attr('stroke', 'blue')
+        .attr('stroke', 'grey')
+        .attr('stroke-dasharray', '10,10')
         .attr('stroke-width', 2)
-        .attr('fill', 'none');
+        .attr('fill', 'none')
+        .attr('data-legend', function(d) {return 'Ukraine'});
 
     d3.select("svg")
         .append("svg:path")
         .attr('d', lineGen(filter_data(data, selected_index, "USA")))
         .attr('transform', "translate(0, " + vertical_correction + " )")
-        .attr('stroke', 'red')
+        .attr('stroke', 'black')
         .attr('stroke-width', 2)
-        .attr('fill', 'none');
+        .attr('fill', 'none')
+        .attr('data-legend', function(d) {return 'United States'});
+
+    d3.select("svg")
+      .selectAll("circle")
+      .data(filter_data(data, selected_index, "USA").filter(function(d) { return !isNaN(d.value);}))
+      .enter()
+      .append("circle")
+      .attr("cx", function(d) {
+            return year_scale(d.year);
+       })
+       .attr("cy", function(d) {
+            return current_index_scale(d.value);
+       })
+       .attr("r", 5)
+       .attr('transform', "translate(0, " + vertical_correction + " )");
+
+    d3.select("svg")
+      .selectAll("rect")
+      .data(filter_data(data, selected_index, "UKR").filter(function(d) { return !isNaN(d.value);}))
+      .enter()
+      .append("rect")
+      .attr("x", function(d) {
+            return year_scale(d.year) - 5;
+       })
+       .attr("y", function(d) {
+            return current_index_scale(d.value) - 5;
+       })
+       .attr("width", 10)
+       .attr("height", 10)
+       .attr('transform', "translate(0, " + vertical_correction + " )")
+       .attr('fill', '#C0C0C0');
+
+    var newest_data = newest_data_same_year(data, selected_index);
+
+    var newest_year = newest_data[0];
+    var newest_data_usa = newest_data[1];
+    var newest_data_ukr = newest_data[2];
+
+    var newest_data_usa_offset = newest_data_usa.toString().length * 15;
+    var newest_data_ukr_offset = newest_data_ukr.toString().length * 15;
+
+    //display current values only if there is data for both 
+    //countries for the same year
+    if (newest_data_usa != 0 && newest_data_ukr != 0) {
+
+      //adding newest available data year near the countries
+      d3.select("svg")
+          .append("svg:text")
+          .text('data for ' + new Date(newest_year).getFullYear() + ' year')
+          .attr('transform', 'translate(' + (3*width/4.35 + 140) +
+            ',' + (height/3 + 100) + ')')
+          .attr('font-size', 22)
+          .attr('font-family', 'sans-serif');
+
+      d3.select("svg")
+          .append("svg:text")
+          .text('the more—the better')
+          .attr('transform', 'translate(' + (3*width/4.35 + 140) +
+            ',' + (height/3 - 20) + ')')
+          .attr('font-size', 22)
+          .attr('font-family', 'sans-serif')
+          .attr('fill', 'blue');
+
+      d3.select("svg")
+          .append("svg:text")
+          .text('the less—the better')
+          .attr('transform', 'translate(' + (3*width/4.35 + 140) +
+            ',' + (height/3) + ')')
+          .attr('font-size', 22)
+          .attr('font-family', 'sans-serif')
+          .attr('fill', 'red');
+
+      d3.select("svg")
+          .append("svg:text")
+          .text('neutral')
+          .attr('transform', 'translate(' + (3*width/4.35 + 140) +
+            ',' + (height/3 + 20) + ')')
+          .attr('font-size', 22)
+          .attr('font-family', 'sans-serif')
+          .attr('fill', 'gray');
+
+      d3.select("svg")
+          .append("svg:text")
+          .text(newest_data_usa)
+          .attr('transform', 'translate(' + (width/3 - newest_data_usa_offset) +
+            ',' + (height/3) + ')')
+          .attr('font-size', 50)
+          .attr('font-family', 'sans-serif')
+          .attr('fill', '#E5E4E2')
+          .attr('font-weight', 'bold');
+
+      d3.select("svg")
+          .append("svg:text")
+          .text(newest_data_ukr)
+          .attr('transform', 'translate('
+            + (3*width/4.35 - newest_data_ukr_offset) + ',' + (height/3) + ')')
+          .attr('font-size', 50)
+          .attr('font-family', 'sans-serif')
+          .attr('fill', '#E5E4E2')
+          .attr('font-weight', 'bold');
+
+    } else {
+
+      d3.select("svg")
+          .append("svg:text")
+          .text('no overlapping data available')
+          .attr('transform', 'translate(' + (3*width/4.35 + 140) +
+            ',' + (height/3 + 100) + ')')
+          .attr('font-size', 22)
+          .attr('font-family', 'sans-serif');
+    }
+
+    var fill_by_index = function(data, index, country) {
+      var index_color = null;
+      if (filter_data(data, selected_index, country)[0]["GBN"] == "bad") {
+        index_color = "red";
+      } else if (filter_data(data, selected_index, country)[0]["GBN"] == "good") {
+        index_color = "blue";
+      } else {
+        index_color = "grey";
+      }
+      return index_color;
+    };
+
+    d3.select("svg")
+        .append("g")
+        .attr("class", "legend")
+        .attr('transform','translate(' + (3*width/4.35 + 140) +
+            ',' + (height/3 + 180) + ')')
+        .style("font-size","20px")
+        .call(d3.legend);
+
 
     };
 
@@ -270,7 +419,8 @@
   </head>
 
 <body>
-
+  <h2> World Development Indicators: United Stated vs. Ukraine </h2>
+  <div class="description"> kjefkwehfwefh </div>
   <div class="chart"> </div>
   <br/>
   <div class="select"> </div>
@@ -278,7 +428,7 @@
   <script type="text/javascript">
 
   function plot() {
-      d3.csv("ua_usa_red.csv", function(d) {
+      d3.csv("ua_usa_25_years_red.csv", function(d) {
         d["value"] = +d["value"];
         d["year"] = format.parse(d["year"]);
         return d;
