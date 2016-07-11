@@ -32,6 +32,17 @@
           font-size: 1.2em;
         }
 
+        .explanation {
+          font-family: arial;
+          font-size: 1.2em;
+        }
+
+        .conclusions {
+          display: inline-block;
+          text-align: center;
+          width: 1400px;
+        }
+
         h2 {
           font-family: arial;
           font-size: 3.4em;
@@ -41,7 +52,48 @@
 
     <script type="text/javascript">
 
-    var format = d3.time.format("%Y")
+    var format = d3.time.format("%Y");
+
+    //Indices with the most prominent findings
+    var chosen_indices = ["EN.POP.DNST","SP.POP.GROW","EN.URB.LCTY.UR.ZS",
+    "SP.RUR.TOTL.ZS","SP.POP.0014.TO.ZS","SP.POP.TOTL.FE.ZS","SG.GEN.PARL.ZS",
+    "AG.LND.AGRI.ZS","NV.AGR.TOTL.ZS","NY.GDP.MKTP.CD","DT.DOD.DECT.CD",
+    "NY.GNP.PCAP.PP.CD","NE.IMP.GNFS.ZS","EN.ATM.CO2E.PC","EG.USE.ELEC.KH.PC",
+    "EG.ELC.RNWX.ZS","SH.STA.ACSN","SH.H2O.SAFE.ZS","SP.DYN.LE00.IN",
+    "SH.STA.MMRT","SH.DYN.MORT","SH.PRV.SMOK.FE","SH.PRV.SMOK.MA",
+    "SH.XPD.OOPC.TO.ZS","IT.NET.BBND.P2","IT.NET.USER.P2","IT.MLT.MAIN.P2",
+    "IT.CEL.SETS.P2","SI.DST.FRST.20"];
+
+    //conclusions, corresponding one-to-one to chosen_indices
+    var conclusions = ["Ukraine is smaller and more consistent in the natural conditions, so people live all around the country", 
+"population in Ukraine has a tendency to decrease, in the last years the tendency of decreasing weakened, meanwhile, in USA year to year population is still increasing, but slower and slower", 
+"Here we can see, how differently thing is going - in Ukraine not much attention is given to the infrastructure of regions, and the consequense is - people are moving to capital city", 
+"% of rural population is higher in Ukraine", 
+"Both nations are growing old, Ukraine faster, though, there is a positive trend in Ukraine from 2010 year", 
+"there is more women in Ukraine", 
+"but more seats in Ukraine's parliament are held by men", 
+"Ukraine has much bigger agricultural capacity, than USA...", 
+"but, added to GDP value showing overall negative trend, making the potentially strong side of the country not so strong in monetary value, which can be one of the reasons, why", 
+"there is no growth in GDP.", 
+"Second strong indicator of Ukraine's bad economy stage is accumulating rise in external debt,", 
+"third identificator of good economy is value of GNI index, which is definitely higher and better trending in USA", 
+"\"Imports of goods and services\" defines the state of industry. And, again, Ukraine performing worse", 
+"Per capita usage of energy in Ukraine is considerably lower, which, generally speaking, is good for the environment...", 
+"electric power consumption per capita is considerably lower in Ukrain, in one hand it is, again, good for the environment, and people are more used to get along without fancy household appliances, but, the latter, on the other hand, means, that the life is less comfortable", 
+"Meanwhile technology in obtaining the energy from the renewable sources in Ukraine is on the far less advance state, though we can see some improvement during the last years", 
+"Increasing percentage of population with the access to improved sanitation facilities shows, that there is some work going on along this line in Ukraine. But in USA this problem was solved long time ago", 
+"while in Ukraine access to good water becomes worse, which is a shame for a civilized country", 
+"Life expectancy at birth is definitely higher in USA, there is almost 7.5 years difference", 
+"Maternal mortality is still higher in Ukraine (24%!), which is also a shame", 
+"Mortality rate of children under 5 years old is decreasing, but still higher in Ukraine", 
+"in Ukraine, less women smoke", 
+"but percentage of smoking men (among adults) in Ukraine is twice as high as in USA", 
+"Ukraine has public free healthcare system. But in fact, when disease comes, one have to pay for a lot of things, even if they are supposed, to be for free",
+"\"Fixed broadband subscription\"- amount of subscribed is less in Ukraine, but the trend is the same. There is no data here about the prices for the home high-speed internet, but in fact, it is much cheaper in Ukraine, not only in absolute values, but weighted on family income", 
+"here we can see, that there is still less internet users in Ukraine, but we are on the way", 
+"in both Ukraine and USA, percentage of fixed telephone subscriptions fall as the cell phones became common. But the difference is that in Ukraine mass availability of the fixed lines was pretty close to the \"mobilization\", and fixed telephone subscription began to fall without reaching the peak", 
+"it may be interesting, that in Ukraine a lot of people have two or even three mobile numbers with different cellular operators. It makes sense, because minutes \"inside network\" are cheap, and one can save money in this way", 
+"it is a rough estimation of the difference between the highest social class and the lowest social class, which is less expressed in Ukraine"];
 
     function draw(data) {
 
@@ -55,7 +107,7 @@
       deleteTag("svg");
 
       var width = 1600,
-          height = 1000,
+          height = 950,
           margin = 120,
           vertical_correction = -84;
 
@@ -74,18 +126,26 @@
             .append("select")
             .attr("class", "dropdown")
             .attr("id", "dropdown")
-            .attr("onchange", "plot()");
+            //first version of "overloaded" drowdown
+            //.attr("onchange", "plot()");
+            .attr("onchange", "this.size=1; this.blur(); plot();")
+            .attr("onfocus", "this.size=5;")
+            .attr("onblur", "this.size=1;");
       } else {
         select = d3.select("select");
       }
 
       //getting list of all values in the "Series" columns
+      //choosing only indices from chosen_indices list in the oder of it
       var all_categories = [];
-      for (var i = 0; i < data.length; i++) {
-        all_categories.push({long_name : data[i]["Series.Name"],
-                             short_name : data[i]["Series.Code"]})
+      for (var j = 0; j < chosen_indices.length; j++) {
+        for (var k = 0; k < data.length; k++) {
+          if (chosen_indices[j] === data[k]["Series.Code"]) {
+              all_categories.push({long_name : data[k]["Series.Name"],
+                              short_name : data[k]["Series.Code"]})
+          }
+        }
       };
-
       //getting rid of the repeating names in the all_categories list
       var categories = new Set();
       var filtered_categories = [];
@@ -115,14 +175,15 @@
 
       var path = d3.geo.path().projection(projection);
 
+      var usa_color_opacity = fill_by_index(data, selected_index, "USA");
       var usa_map = svg.append("path")
                 .datum(topojson.feature(topo_data, topo_data.objects.usa))
                 .attr("d", path)
-                .attr("fill", fill_by_index(data, selected_index, "USA"))
-                .attr("fill-opacity", "0.6");
+                .attr("fill", usa_color_opacity[0])
+                .attr("fill-opacity", usa_color_opacity[1]);
       });
 
-      //drawing filler contour of Ukraine
+      //drawing filled contour of Ukraine
       ukr = $.getJSON("ukr_topo.json", function(topo_data) {
 
       var projection = d3.geo.mercator()
@@ -132,11 +193,12 @@
 
       var path = d3.geo.path().projection(projection);
 
+      var ukr_color_opacity = fill_by_index(data, selected_index, "UKR");
       var ukr_map = svg.append("path")
                 .datum(topojson.feature(topo_data, topo_data.objects.ukr))
                 .attr("d", path)
-                .attr("fill", fill_by_index(data, selected_index, "UKR"))
-                .attr("fill-opacity", "0.6");;
+                .attr("fill", ukr_color_opacity[0])
+                .attr("fill-opacity", ukr_color_opacity[1]);
        });
 
       //finding the min and max values (extend) of the future time axis
@@ -149,7 +211,7 @@
           .range([width/4, 3*width/4])
           .domain(year_extent);
 
-      //filter data for the chosen index and country (if given) on demand 
+      //filter data for the chosen index and country (if given) on demand
       var filter_data = function(data, index, country){
 
         var filteredData = [];
@@ -194,7 +256,7 @@
               associativeArray[year] = [filteredData[i]];
           }
         }
-        var sorted_years = get_keys(associativeArray).sort().reverse();
+        var sorted_years = get_keys(associativeArray).reverse();
         for (var i = 0; i < sorted_years.length; i++) {
           var current_year = sorted_years[i];
           var all_for_current_year = associativeArray[current_year];
@@ -227,6 +289,7 @@
           return keys;
       };
 
+    //creating x-axis
     var year_axis = d3.svg.axis()
                     .scale(year_scale)
                     .ticks(d3.time.years, 2);
@@ -237,6 +300,7 @@
         .attr('transform', "translate(0," + 11*height/12 + ")")
         .call(year_axis);
 
+    //creating y-axis
     var index_axis = d3.svg.axis()
                      .scale(index_scale(data, selected_index))
                      .orient("left");
@@ -248,9 +312,12 @@
          + vertical_correction + ")")
         .call(index_axis);
 
+    //different indicators have different domains; 
+    //we have to change y-axis every time when new indicator is chosen
+    //from drop-down list
     var current_index_scale = index_scale(data, selected_index);
 
-    //creating line charts
+    //creating line chart's "generator"
     var lineGen = d3.svg.line()
         .defined(function(d) {
           return !isNaN(d.value);
@@ -262,6 +329,7 @@
           return current_index_scale(d.value);
         });
 
+    //line chart for Ukraine
     d3.select("svg")
         .append("svg:path")
         .attr('d', lineGen(filter_data(data, selected_index, "UKR")))
@@ -272,6 +340,7 @@
         .attr('fill', 'none')
         .attr('data-legend', function(d) {return 'Ukraine'});
 
+    //line chart for USA
     d3.select("svg")
         .append("svg:path")
         .attr('d', lineGen(filter_data(data, selected_index, "USA")))
@@ -281,9 +350,14 @@
         .attr('fill', 'none')
         .attr('data-legend', function(d) {return 'United States'});
 
+    //on line charts only the nearest points are connected by line;
+    //if we have NA gaps between data points (which is the frequent case),
+    //we won't see the data point. So, we have to add the layer of markers.
+    //Circles for USA:
     d3.select("svg")
       .selectAll("circle")
-      .data(filter_data(data, selected_index, "USA").filter(function(d) { return !isNaN(d.value);}))
+      .data(filter_data(data, selected_index, "USA").filter(function(d) 
+        { return !isNaN(d.value);}))
       .enter()
       .append("circle")
       .attr("cx", function(d) {
@@ -295,9 +369,11 @@
        .attr("r", 5)
        .attr('transform', "translate(0, " + vertical_correction + " )");
 
+    //...rectangles for Ukraine:
     d3.select("svg")
       .selectAll("rect")
-      .data(filter_data(data, selected_index, "UKR").filter(function(d) { return !isNaN(d.value);}))
+      .data(filter_data(data, selected_index, "UKR").filter(function(d) 
+        { return !isNaN(d.value);}))
       .enter()
       .append("rect")
       .attr("x", function(d) {
@@ -311,6 +387,39 @@
        .attr('transform', "translate(0, " + vertical_correction + " )")
        .attr('fill', '#C0C0C0');
 
+    //'GBN' (good, bad and neutral) column was added to the original data
+    //to fill country's shapes with the: blue is increase in indicator's
+    //value shows good trend in real life, red, if the opposite is true
+    //and neutral, which means that changing in the values for the given
+    //indicator is neither bad nor good
+
+    //second version of coloring logic - different opacity depending on value
+    var fill_by_index = function(data, index, country) {
+      var index_color = null;
+      var index_opacity = 1;
+      var color_opacity = [];
+      if (filter_data(data, selected_index, country)[0]["GBN"] == "bad") {
+        index_color = "red";
+      } else if (filter_data(data, selected_index, country)[0]["GBN"] == "good")
+       {
+        index_color = "blue";
+      } else {
+        index_color = "grey";
+      }
+      var newest_data = newest_data_same_year(data, index);
+      var usa_value = newest_data[1];
+      var ukr_value = newest_data[2];
+      if (usa_value > ukr_value && country == "UKR") {
+        index_opacity = 0.6
+      }
+      if (usa_value < ukr_value && country == "USA") {
+        index_opacity = 0.6
+      }
+      return [index_color, index_opacity];
+    };
+
+    //in addition, I want to show the latest available yearly data for the
+    //chosen indicator by the text (number) inside the country's shape
     var newest_data = newest_data_same_year(data, selected_index);
 
     var newest_year = newest_data[0];
@@ -327,12 +436,15 @@
       //adding newest available data year near the countries
       d3.select("svg")
           .append("svg:text")
-          .text('data for ' + new Date(newest_year).getFullYear() + ' year')
-          .attr('transform', 'translate(' + (3*width/4.35 + 140) +
-            ',' + (height/3 + 100) + ')')
-          .attr('font-size', 22)
-          .attr('font-family', 'sans-serif');
+          .text('data for ' + new Date(newest_year).getFullYear() + 
+            ' year (newest data, available for both countries)')
+          .attr('transform', 'translate(' + (3*width/4.35 - 545) +
+            ',' + (180) + ')')
+          .attr('font-size', 20)
+          .attr('font-family', 'sans-serif')
+          .attr('fill', fill_by_index(data, selected_index, 'USA')[0]);
 
+      //adding 'GBN' legend
       d3.select("svg")
           .append("svg:text")
           .text('the more—the better')
@@ -360,6 +472,7 @@
           .attr('font-family', 'sans-serif')
           .attr('fill', 'gray');
 
+      //adding numbers inside countries
       d3.select("svg")
           .append("svg:text")
           .text(newest_data_usa)
@@ -382,6 +495,8 @@
 
     } else {
 
+      //if there is no data available for both countries,
+      //message "no overlapping data" will appear
       d3.select("svg")
           .append("svg:text")
           .text('no overlapping data available')
@@ -391,18 +506,8 @@
           .attr('font-family', 'sans-serif');
     }
 
-    var fill_by_index = function(data, index, country) {
-      var index_color = null;
-      if (filter_data(data, selected_index, country)[0]["GBN"] == "bad") {
-        index_color = "red";
-      } else if (filter_data(data, selected_index, country)[0]["GBN"] == "good") {
-        index_color = "blue";
-      } else {
-        index_color = "grey";
-      }
-      return index_color;
-    };
-
+    //adding legend with countries names.
+    //"d3.legend.js" is used
     d3.select("svg")
         .append("g")
         .attr("class", "legend")
@@ -411,8 +516,11 @@
         .style("font-size","20px")
         .call(d3.legend);
 
+    var selected_index_position = chosen_indices.indexOf(selected_index);
+    d3.select(".conclusions").text(conclusions[selected_index_position]);
 
     };
+    
 
     </script>
 
@@ -420,10 +528,34 @@
 
 <body>
   <h2> World Development Indicators: United Stated vs. Ukraine </h2>
-  <div class="description"> kjefkwehfwefh </div>
-  <div class="chart"> </div>
+  <div class="description"> data source: <a href="http://databank.worldbank.org
+  /data/reports.aspx?source=world-development-indicators"> 
+  http://databank.worldbank.org </a>
+  <br/>
+  <br/>
+  Little more, than a year ago, I've moved from Ukraine to USA.
+  <br/>
+  To justify my decision, I've used the publicly available data 
+  to "compare" the countries.
+  <br/>
+  It appeared, that decision was just and supported by objective facts.
+  <br/>
+  Chosing the items in the drop-down in turn will gradually reveal the story: from general facts to actual problems.
+  <br/>
+  <br/>
+  Note: the relative sizes of countries
+  on the image does not correspond to reality and used only for
+  illustrative purposes. 
+  <br/>
+  In fact, area of United States is almost 16
+  times larger, than area of Ukraine; Ukraine is 1.15 times 
+  smaller, than Texas.</div>
+  <br/>
   <br/>
   <div class="select"> </div>
+  <div class="chart"> </div>
+  <div class="conclusions explanation"> </div>
+  <br/>
 
   <script type="text/javascript">
 
